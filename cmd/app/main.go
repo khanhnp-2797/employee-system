@@ -1,13 +1,8 @@
 package main
 
 import (
-	"context"
 	"log"
 	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
-	"time"
 
 	"github.com/joho/godotenv"
 
@@ -55,29 +50,8 @@ func main() {
 		}
 	})
 
-	server := &http.Server{
-		Addr:         ":" + cfg.AppPort,
-		Handler:      mux,
-		ReadTimeout:  15 * time.Second,
-		WriteTimeout: 15 * time.Second,
-		IdleTimeout:  60 * time.Second,
-	}
-
-	go func() {
-		sigChan := make(chan os.Signal, 1)
-		signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
-		<-sigChan
-
-		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-		defer cancel()
-
-		if err := server.Shutdown(ctx); err != nil {
-			log.Printf("Server shutdown error: %v", err)
-		}
-	}()
-
 	log.Printf("Server running on http://localhost:%s\n", cfg.AppPort)
-	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		log.Fatalf("Server error: %v", err)
-	}
+    if err := http.ListenAndServe(":"+cfg.AppPort, mux); err != nil {
+        log.Fatalf("Server error: %v", err)
+    }
 }

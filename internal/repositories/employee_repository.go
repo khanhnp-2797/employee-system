@@ -124,7 +124,7 @@ func (r *employeeRepository) Update(ctx context.Context, id int, emp *models.Emp
 func (r *employeeRepository) Delete(ctx context.Context, id int) error {
 	query := `DELETE FROM employees WHERE id = $1`
 
-	result, err := r.db.ExecContext(ctx, query, id)
+	_, err := r.db.ExecContext(ctx, query, id)
 	if err != nil {
 		return fmt.Errorf(err.Error())
 	}
