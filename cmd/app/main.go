@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/joho/godotenv"
 
@@ -32,6 +33,10 @@ func main() {
 	employeeService := services.NewEmployeeService(employeeRepo)
 	employeeHandler := handlers.NewEmployeeHandler(employeeService)
 
+	departmentRepo := repositories.NewDepartmentRepository(db)
+	departmentService := services.NewDepartmentService(departmentRepo)
+	departmentHandler := handlers.NewDepartmentHandler(departmentService)
+
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/employees", func(w http.ResponseWriter, r *http.Request) {
@@ -50,8 +55,20 @@ func main() {
 		}
 	})
 
+	mux.HandleFunc("/departments", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodPost {
+			departmentHandler.CreateDepartment(w, r)
+		} else if r.Method == http.MethodGet {
+			if len(r.URL.Path) == len("/departments") {
+				departmentHandler.GetDepartments(w, r)
+			} else if strings.Contains(r.URL.Path, "/employees") {
+				departmentHandler.GetEmployeesByDepartment(w, r)
+			}
+		}
+	})
+
 	log.Printf("Server running on http://localhost:%s\n", cfg.AppPort)
-    if err := http.ListenAndServe(":"+cfg.AppPort, mux); err != nil {
-        log.Fatalf("Server error: %v", err)
-    }
+	if err := http.ListenAndServe(":"+cfg.AppPort, mux); err != nil {
+		log.Fatalf("Server error: %v", err)
+	}
 }
