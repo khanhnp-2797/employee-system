@@ -13,6 +13,7 @@ type EmployeeRepository interface {
 	GetAll(ctx context.Context, limit, offset int, departmentID *int) ([]*models.Employee, int, error)
 	Update(ctx context.Context, id int, emp *models.Employee) error
 	Delete(ctx context.Context, id int) error
+	Search(ctx context.Context, keyword string) ([]*models.Employee, error)
 }
 
 type employeeRepository struct {
@@ -130,4 +131,29 @@ func (r *employeeRepository) Delete(ctx context.Context, id int) error {
 	}
 
 	return nil
+}
+
+func (r *employeeRepository) Search(ctx context.Context, keyword string) ([]*models.Employee, error) {
+	query := `SELECT id, name, age, position, department_id, salary, created_at, updated_at 
+			FROM employees 
+			WHERE LOWER(name) LIKE LOWER($1) OR LOWER(position) LIKE LOWER($2)`
+
+	searchKeyword := "%" + keyword + "%"
+	rows, err := r.db.QueryContext(ctx, query, searchKeyword, searchKeyword)
+	if err != nil {
+		return nil, fmt.Errorf(err.Error())
+	}
+	defer rows.Close()
+
+	var employees []*models.Employee
+	for rows.Next() {
+		emp := &models.Employee{}
+		if err := rows.Scan(&emp.ID, &emp.Name, &emp.Age, &emp.Position, 
+			&emp.DepartmentID, &emp.Salary, &emp.CreatedAt, &emp.UpdatedAt); err != nil {
+			return nil, fmt.Errorf(err.Error())
+		}
+		employees = append(employees, emp)
+	}
+
+	return employees, nil
 }

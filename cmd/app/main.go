@@ -55,6 +55,18 @@ func main() {
 		}
 	})
 
+	mux.HandleFunc("/employees/search", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet {
+			employeeHandler.SearchEmployees(w, r)
+		}
+	})
+
+	mux.HandleFunc("/employees/export", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodPost {
+			employeeHandler.ExportEmployees(w, r)
+		}
+	})
+
 	mux.HandleFunc("/departments", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPost {
 			departmentHandler.CreateDepartment(w, r)

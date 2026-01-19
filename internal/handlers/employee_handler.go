@@ -211,6 +211,45 @@ func (h *EmployeeHandler) DeleteEmployee(w http.ResponseWriter, r *http.Request)
 	w.WriteHeader(http.StatusNoContent)
 }
 
+func (h *EmployeeHandler) SearchEmployees(w http.ResponseWriter, r *http.Request) {
+	log.Println("SearchEmployees handler called")
+
+	keyword := r.URL.Query().Get("keyword")
+	if keyword == "" {
+		writeError(w, http.StatusBadRequest, "keyword is required")
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+
+	employees, err := h.service.SearchEmployees(ctx, keyword)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(employees)
+}
+
+func (h *EmployeeHandler) ExportEmployees(w http.ResponseWriter, r *http.Request) {
+	log.Println("ExportEmployees handler called")
+
+	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	defer cancel()
+
+	if err := h.service.ExportEmployees(ctx); err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"message": "Export completed"})
+}
+
 func writeError(w http.ResponseWriter, statusCode int, message string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
