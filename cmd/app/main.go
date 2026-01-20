@@ -10,6 +10,7 @@ import (
 	"employee-system/config"
 	"employee-system/internal/database"
 	"employee-system/internal/handlers"
+	"employee-system/internal/middleware"
 	"employee-system/internal/repositories"
 	"employee-system/internal/services"
 )
@@ -79,8 +80,10 @@ func main() {
 		}
 	})
 
-	log.Printf("Server running on http://localhost:%s\n", cfg.AppPort)
-	if err := http.ListenAndServe(":"+cfg.AppPort, mux); err != nil {
-		log.Fatalf("Server error: %v", err)
-	}
+	handler := middleware.LoggingMiddleware(mux)
+
+    log.Printf("Server running on http://localhost:%s\n", cfg.AppPort)
+    if err := http.ListenAndServe(":"+cfg.AppPort, handler); err != nil {
+        log.Fatalf("Server error: %v", err)
+    }
 }
